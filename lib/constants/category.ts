@@ -15,6 +15,7 @@ export const Categories = [
   'helm',
   'iac',
   'java',
+  'jenkins',
   'js',
   'kubernetes',
   'node',
