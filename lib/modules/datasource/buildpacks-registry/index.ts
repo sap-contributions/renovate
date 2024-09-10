@@ -1,6 +1,9 @@
+import { ZodError } from 'zod';
 import { logger } from '../../../logger';
+import { Result } from '../../../util/result';
 import { Datasource } from '../datasource';
-import type { GetReleasesConfig, ReleaseResult } from '../types';
+import { ReleasesConfig } from '../schema';
+import type { GetReleasesConfig, Release, ReleaseResult } from '../types';
 import { BuildpacksRegistryResponseSchema } from './schema';
 
 export class BuildpacksRegistryDatasource extends Datasource {
@@ -12,6 +15,8 @@ export class BuildpacksRegistryDatasource extends Datasource {
 
   override readonly customRegistrySupport = false;
 
+  override readonly defaultRegistryUrls = ['https://registry.buildpacks.io/'];
+
   override readonly releaseTimestampSupport = true;
   override readonly releaseTimestampNote =
     'The release timestamp is determined from the `published_at` field in the results.';
@@ -19,33 +24,36 @@ export class BuildpacksRegistryDatasource extends Datasource {
   override readonly sourceUrlNote =
     'The source URL is determined from the `source_code_url` field of the release object in the results.';
 
-  async getReleases({
-    packageName,
-    registryUrl,
-  }: GetReleasesConfig): Promise<ReleaseResult | null> {
-    
-    const url = `https://registry.buildpacks.io/api/v1/buildpacks/${packageName}`
+  async getReleases(config: GetReleasesConfig): Promise<ReleaseResult | null> {
+    const result = Result.parse(config, ReleasesConfig)
+      .transform(({ packageName, registryUrl }) => {
+        const url = `${registryUrl}api/v1/buildpacks/${packageName}`;
 
-    const { val: response, err: baseErr } = await this.http
-      .getJsonSafe(url, BuildpacksRegistryResponseSchema)
-      .onError((err) => {
-        logger.warn(
-          { datasource: this.id, packageName, err },
-          `Error fetching ${url}`,
-        );
+        return this.http.getJsonSafe(url, BuildpacksRegistryResponseSchema);
       })
-      .unwrap();
-    if (baseErr) {
-      this.handleGenericErrors(baseErr);
+      .transform(({ versions, latest }): ReleaseResult => {
+        const releases: Release[] = versions;
+
+        const res: ReleaseResult = { releases };
+
+        if (latest) {
+          res.homepage = latest.homepage;
+        }
+
+        return res;
+      });
+
+    const { val, err } = await result.unwrap();
+
+    if (err instanceof ZodError) {
+      logger.debug({ err }, 'buildpacks: validation error');
+      return null;
     }
 
-    const result = response.map((value) => {
-      return {
-        ...value,
-        homepage: response.latest.homepage,
-      };
-    });
+    if (err) {
+      this.handleGenericErrors(err);
+    }
 
-    return result.releases.length ? result : null;
+    return val;
   }
 }

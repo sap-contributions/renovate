@@ -5,10 +5,11 @@ import { z } from 'zod';
  */
 export const BuildpacksRegistryResponseSchema = z.object({
   latest: z.object({
-    homepage: z.string()
+    homepage: z.string(),
   }),
-  versions: z.object({
-    version: z.string()
-  }).array()
-  });
-
+  versions: z
+    .object({
+      version: z.string(),
+    })
+    .array(),
+});
