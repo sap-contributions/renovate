@@ -20,6 +20,10 @@ uri = "example/registry-cnb"
 uri = "urn:cnb:registry:example/foo@1.0.0"
 
 [[io.buildpacks.group]]
+id = "urn:cnb:registry:example/bar"
+version = "1.2.3"
+
+[[io.buildpacks.group]]
 uri = "some-bp@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 [[io.buildpacks.group]]

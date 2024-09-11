@@ -1,9 +1,16 @@
 import { z } from 'zod';
 import { Toml } from '../../../util/schema-utils';
 
-const BuildpackGroup = z.object({
-  uri: z.string().optional(),
+const BuildpackByName = z.object({
+  id: z.string(),
+  version: z.string().optional(),
 });
+
+const BuildpackByURI = z.object({
+  uri: z.string(),
+});
+
+const BuildpackGroup = BuildpackByName.or(BuildpackByURI);
 
 const IoBuildpacks = z.object({
   builder: z.string().optional(),

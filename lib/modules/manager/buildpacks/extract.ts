@@ -9,13 +9,18 @@ import type {
   PackageFileContent,
 } from '../types';
 import { type ProjectDescriptor, ProjectDescriptorToml } from './schema';
+import { BuildpacksRegistryDatasource } from '../../datasource/buildpacks-registry';
 
 const dockerPrefix = regEx(/^docker:\/?\//);
+const buildpackRegistryPrefix = regEx(/^urn:cnb:registry:/)
 const buildpackRegistryRef = regEx(
-  /^[a-z0-9\-.]+\/[a-z0-9\-.]+(?:@(?<version>.+))?$/,
+  /^urn:cnb:registry:[a-z0-9\-.]+\/[a-z0-9\-.]+(?:@(?<version>.+))?$/,
 );
 
-function isBuildpackRegistryRef(ref: string): boolean {
+function isBuildpackRegistryRef(ref: string | undefined): boolean {
+  if (ref === undefined) {
+    return false
+  }
   const bpRegistryMatch = buildpackRegistryRef.exec(ref);
   if (!bpRegistryMatch) {
     return false;
@@ -110,6 +115,28 @@ export function extractPackageFile(
           'Cloud Native Buildpack',
         );
 
+        deps.push(dep);
+      } else if (group.uri && isBuildpackRegistryRef(group.uri)) {
+        const dependency = group.uri.replace(buildpackRegistryPrefix, '')
+        const version = dependency.split('@')[1] || "latest"
+
+        const dep: PackageDependency = {
+          datasource: BuildpacksRegistryDatasource.id,
+          currentValue: version,
+          packageName: dependency.split('@')[0],
+          replaceString: `urn:cnb:registry:${dependency}`
+        }
+        deps.push(dep);
+      } else if (group.id && isBuildpackRegistryRef(group.id)) {
+        const version = group.version || "latest"
+
+        const packageName = group.id.replace(buildpackRegistryPrefix, '');
+        const dep: PackageDependency = {
+          datasource: BuildpacksRegistryDatasource.id,
+          currentValue: version,
+          packageName: packageName,
+          replaceString: `${version}`
+        }
         deps.push(dep);
       }
     }

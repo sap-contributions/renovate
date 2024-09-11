@@ -70,6 +70,22 @@ describe('modules/manager/buildpacks/extract', () => {
           replaceString:
             'cnbs/some-bp:some-tag@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
         },
+        {
+          currentValue:
+            '1.0.0',
+          datasource: 'buildpacks-registry',
+          packageName: 'example/foo',
+          replaceString:
+            'urn:cnb:registry:example/foo@1.0.0',
+        },
+        {
+          currentValue:
+            '1.2.3',
+          datasource: 'buildpacks-registry',
+          packageName: 'example/bar',
+          replaceString:
+            '1.2.3',
+        },
       ]);
     });
   });
