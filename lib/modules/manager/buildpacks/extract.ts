@@ -13,15 +13,15 @@ import { BuildpacksRegistryDatasource } from '../../datasource/buildpacks-regist
 
 const dockerPrefix = regEx(/^docker:\/?\//);
 const buildpackRegistryPrefix = regEx(/^urn:cnb:registry:/)
-const buildpackRegistryRef = regEx(
-  /^urn:cnb:registry:[a-z0-9\-.]+\/[a-z0-9\-.]+(?:@(?<version>.+))?$/,
+const buildpackRegistryId = regEx(
+  /^[a-z0-9\-.]+\/[a-z0-9\-.]+(?:@(?<version>.+))?$/,
 );
 
-function isBuildpackRegistryRef(ref: string | undefined): boolean {
+function isBuildpackRegistryId(ref: string | undefined): boolean {
   if (ref === undefined) {
     return false
   }
-  const bpRegistryMatch = buildpackRegistryRef.exec(ref);
+  const bpRegistryMatch = buildpackRegistryId.exec(ref);
   if (!bpRegistryMatch) {
     return false;
   } else if (!bpRegistryMatch.groups?.version) {
@@ -36,13 +36,17 @@ function isDockerRef(ref: string): boolean {
   if (
     ref.startsWith('urn:cnb') || // buildpacks registry or builder urns
     ref.startsWith('from=') || // builder reference
-    isBuildpackRegistryRef(ref) || // buildpack registry ID reference
+    isBuildpackRegistryId(ref) || // buildpack registry ID reference
     (schemaMatch && !ref.startsWith('docker:/')) // unsupported schema
   ) {
     return false;
   }
 
   return true;
+}
+
+function isBuildpackRegistryRef(ref: string): boolean {
+  return isBuildpackRegistryId(ref) || ref.startsWith('urn:cnb:registry:')
 }
 
 function parseProjectToml(
@@ -118,26 +122,31 @@ export function extractPackageFile(
         deps.push(dep);
       } else if (group.uri && isBuildpackRegistryRef(group.uri)) {
         const dependency = group.uri.replace(buildpackRegistryPrefix, '')
-        const version = dependency.split('@')[1] || "latest"
-
-        const dep: PackageDependency = {
-          datasource: BuildpacksRegistryDatasource.id,
-          currentValue: version,
-          packageName: dependency.split('@')[0],
-          replaceString: `urn:cnb:registry:${dependency}`
+        
+        if(dependency.includes('@')) {
+          const version = dependency.split('@')[1]
+          const dep: PackageDependency = {
+            datasource: BuildpacksRegistryDatasource.id,
+            currentValue: version,
+            packageName: dependency.split('@')[0],
+            replaceString: `urn:cnb:registry:${dependency}`
+          }
+          deps.push(dep);
         }
-        deps.push(dep);
-      } else if (group.id && isBuildpackRegistryRef(group.id)) {
-        const version = group.version || "latest"
 
-        const packageName = group.id.replace(buildpackRegistryPrefix, '');
-        const dep: PackageDependency = {
-          datasource: BuildpacksRegistryDatasource.id,
-          currentValue: version,
-          packageName: packageName,
-          replaceString: `${version}`
+      } else if (group.id) {
+        const version = group.version
+
+        if(version) {
+          const packageName = group.id
+          const dep: PackageDependency = {
+            datasource: BuildpacksRegistryDatasource.id,
+            currentValue: version,
+            packageName: packageName,
+            replaceString: `${version}`
+          }
+          deps.push(dep);
         }
-        deps.push(dep);
       }
     }
   }

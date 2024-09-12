@@ -23,6 +23,7 @@ describe('modules/manager/buildpacks/extract', () => {
         'project.toml',
         {},
       );
+      expect(res?.deps).toHaveLength(8)
       expect(res?.deps).toEqual([
         {
           autoReplaceStringTemplate:
@@ -50,14 +51,28 @@ describe('modules/manager/buildpacks/extract', () => {
           replaceString: 'buildpacks/nodejs:3.3.3',
         },
         {
+          datasource: 'buildpacks-registry',
+          currentValue: '1.0.0',
+          packageName: 'example/foo',
+          replaceString:
+            'urn:cnb:registry:example/foo@1.0.0',
+        },
+        {
+          datasource: 'buildpacks-registry',
+          currentValue: '1.2.3',
+          packageName: 'example/bar',
+          replaceString:
+            'urn:cnb:registry:example/bar@1.2.3',
+        },
+        {
           autoReplaceStringTemplate:
             '{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}',
           currentDigest:
             'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
           datasource: 'docker',
-          depName: 'some-bp',
+          depName: 'cnbs/some-bp',
           replaceString:
-            'some-bp@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+            'cnbs/some-bp@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
         },
         {
           autoReplaceStringTemplate:
@@ -71,20 +86,10 @@ describe('modules/manager/buildpacks/extract', () => {
             'cnbs/some-bp:some-tag@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
         },
         {
-          currentValue:
-            '1.0.0',
           datasource: 'buildpacks-registry',
-          packageName: 'example/foo',
-          replaceString:
-            'urn:cnb:registry:example/foo@1.0.0',
-        },
-        {
-          currentValue:
-            '1.2.3',
-          datasource: 'buildpacks-registry',
-          packageName: 'example/bar',
-          replaceString:
-            '1.2.3',
+          currentValue: '2.3.4',
+          packageName: 'example/tee',
+          replaceString: '2.3.4',
         },
       ]);
     });
