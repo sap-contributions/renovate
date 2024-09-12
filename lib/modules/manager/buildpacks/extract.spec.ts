@@ -23,7 +23,7 @@ describe('modules/manager/buildpacks/extract', () => {
         'project.toml',
         {},
       );
-      expect(res?.deps).toHaveLength(8)
+      expect(res?.deps).toHaveLength(8);
       expect(res?.deps).toEqual([
         {
           autoReplaceStringTemplate:
@@ -54,15 +54,13 @@ describe('modules/manager/buildpacks/extract', () => {
           datasource: 'buildpacks-registry',
           currentValue: '1.0.0',
           packageName: 'example/foo',
-          replaceString:
-            'urn:cnb:registry:example/foo@1.0.0',
+          replaceString: 'urn:cnb:registry:example/foo@1.0.0',
         },
         {
           datasource: 'buildpacks-registry',
           currentValue: '1.2.3',
           packageName: 'example/bar',
-          replaceString:
-            'urn:cnb:registry:example/bar@1.2.3',
+          replaceString: 'urn:cnb:registry:example/bar@1.2.3',
         },
         {
           autoReplaceStringTemplate:

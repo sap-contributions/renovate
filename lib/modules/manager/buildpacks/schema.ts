@@ -12,6 +12,22 @@ const BuildpackByURI = z.object({
 
 const BuildpackGroup = BuildpackByName.or(BuildpackByURI);
 
+type BuildpackByNameType = z.infer<typeof BuildpackByName>;
+type BuildpackByURIType = z.infer<typeof BuildpackByURI>;
+type BuildpackGroupType = z.infer<typeof BuildpackGroup>;
+
+export function isBuildpackByName(
+  group: BuildpackGroupType,
+): group is BuildpackByNameType {
+  return 'id' in group;
+}
+
+export function isBuildpackByURI(
+  group: BuildpackGroupType,
+): group is BuildpackByURIType {
+  return 'uri' in group;
+}
+
 const IoBuildpacks = z.object({
   builder: z.string().optional(),
   group: z.array(BuildpackGroup).optional(),
